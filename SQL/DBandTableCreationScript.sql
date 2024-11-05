@@ -1,9 +1,8 @@
+-- Assignment 3 Db Schema Script
 
-/*Assignment 3 Db Schema Script*/
-
-CREATE DATABASE 3309Proj;
 USE 3309Proj;
-/*Create Tables*/
+
+-- Create Tables
 
 CREATE TABLE Department (
     departmentID INT PRIMARY KEY,
@@ -55,10 +54,11 @@ CREATE TABLE Course (
 CREATE TABLE StudentCourse (
     courseCode VARCHAR(10),
     studentID INT,
+    year INT,
     grade CHAR(2),
-    PRIMARY KEY (courseCode, studentID),
+    PRIMARY KEY (courseCode, year, studentID),
     FOREIGN KEY (studentID) REFERENCES Student(studentID),
-    FOREIGN KEY (courseCode) REFERENCES CourseDetails(courseCode)
+    FOREIGN KEY (courseCode, year) REFERENCES Course(courseCode, year) -- Updated reference
 );
 
 CREATE TABLE CalendarEvent (
@@ -68,8 +68,9 @@ CREATE TABLE CalendarEvent (
     eventStart DATETIME,
     eventDuration TIME,
     courseID VARCHAR(10) NULL,
+    cyear INT NULL,
     studentID INT NULL,
-    FOREIGN KEY (courseID) REFERENCES CourseDetails(courseCode),
+    FOREIGN KEY (courseID, cyear) REFERENCES Course(courseCode, year), -- Updated reference
     FOREIGN KEY (studentID) REFERENCES Student(studentID)
 );
 
@@ -88,7 +89,7 @@ CREATE TABLE EmergencyContact (
     FOREIGN KEY (phoneNumber) REFERENCES Contact(phoneNumber)
 );
 
---Trigers
+-- Triggers
 
 DELIMITER //
 
@@ -139,10 +140,27 @@ DESCRIBE Contact;
 -- To view the structure of the EmergencyContact table
 DESCRIBE EmergencyContact;
 
+DELIMITER //
 
+CREATE TRIGGER limit_emergency_contacts
+BEFORE INSERT ON EmergencyContact
+FOR EACH ROW
+BEGIN
+    DECLARE contact_count INT;
 
+    -- Count existing emergency contacts for the given studentID
+    SELECT COUNT(*) INTO contact_count
+    FROM EmergencyContact
+    WHERE studentID = NEW.studentID;
 
+    -- Prevent insertion if the student already has 3 emergency contacts
+    IF contact_count >= 3 THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'A student can have a maximum of 3 emergency contacts.';
+    END IF;
+END //
 
+DELIMITER ;
 
 
 
