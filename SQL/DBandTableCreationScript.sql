@@ -1,5 +1,5 @@
 -- Assignment 3 Db Schema Script
-
+CREATE DATABASE 3309Proj;
 USE 3309Proj;
 
 -- Create Tables
@@ -16,7 +16,7 @@ CREATE TABLE Student (
     email VARCHAR(255) UNIQUE,
     password VARCHAR(255),
     fullName VARCHAR(255),
-    year INT,
+    yearInProgram INT,
     graduationYear INT,
     program VARCHAR(255),
     departmentID INT,
@@ -45,8 +45,8 @@ CREATE TABLE CourseDetails (
 CREATE TABLE Course (
     courseCode VARCHAR(10),
     instructor INT,
-    year INT,
-    PRIMARY KEY (courseCode, year),
+    cyear INT,
+    PRIMARY KEY (courseCode, cyear),
     FOREIGN KEY (courseCode) REFERENCES CourseDetails(courseCode),
     FOREIGN KEY (instructor) REFERENCES FacultyMember(facultyID)
 );
@@ -54,11 +54,11 @@ CREATE TABLE Course (
 CREATE TABLE StudentCourse (
     courseCode VARCHAR(10),
     studentID INT,
-    year INT,
+    cyear INT,
     grade CHAR(2),
-    PRIMARY KEY (courseCode, year, studentID),
+    PRIMARY KEY (courseCode, cyear, studentID),
     FOREIGN KEY (studentID) REFERENCES Student(studentID),
-    FOREIGN KEY (courseCode, year) REFERENCES Course(courseCode, year) -- Updated reference
+    FOREIGN KEY (courseCode, cyear) REFERENCES Course(courseCode, cyear) -- Updated reference
 );
 
 CREATE TABLE CalendarEvent (
@@ -67,10 +67,10 @@ CREATE TABLE CalendarEvent (
     eventDescription TEXT,
     eventStart DATETIME,
     eventDuration TIME,
-    courseID VARCHAR(10) NULL,
+    courseCode VARCHAR(10) NULL,
     cyear INT NULL,
     studentID INT NULL,
-    FOREIGN KEY (courseID, cyear) REFERENCES Course(courseCode, year), -- Updated reference
+    FOREIGN KEY (courseCode, cyear) REFERENCES Course(courseCode, cyear), -- Updated reference
     FOREIGN KEY (studentID) REFERENCES Student(studentID)
 );
 
