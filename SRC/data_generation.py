@@ -99,8 +99,11 @@ def generate_student_course_insert_statements(num_students, course_details):
 
     return insert_statements
 
+import random
+from datetime import datetime, timedelta
+
 def generate_calendar_event_insert_statements(num_students, course_details):
-    """Generate INSERT statements for the CalendarEvent table."""
+    """Generate INSERT statements for the CalendarEvent table with event times between 9 AM and 5 PM."""
     insert_statements = []
     event_id = 1
     
@@ -108,18 +111,21 @@ def generate_calendar_event_insert_statements(num_students, course_details):
     start_date = datetime(2024, 9, 1)  # Starting from September 2024
     end_date = datetime(2024, 12, 31)  # Until December 2024
     days_in_week = 7  # Days in a week for weekly events
-    duration_str = "03:00:00"  # Fixed three-hour duration
+    fixed_duration_str = "03:00:00"  # Fixed three-hour duration
 
     for course_code in course_details:
-        # Schedule weekly lectures for each course
         current_date = start_date
         while current_date <= end_date:
+            # Set a random start time between 9 AM and 2 PM, ensuring it ends by 5 PM
+            start_hour = random.randint(9, 14)
+            event_start = current_date.replace(hour=start_hour, minute=0, second=0)
+            
             # Generate insert statement for a weekly lecture
             insert_statement = (
                 f"INSERT INTO CalendarEvent (eventID, eventName, eventDescription, eventStart, eventDuration, "
                 f"courseCode, cyear, studentID) "
                 f"VALUES ({event_id}, 'Weekly Lecture for {course_code}', 'Weekly lecture', "
-                f"'{current_date}', '{duration_str}', '{course_code}', 2024, NULL);"
+                f"'{event_start}', '{fixed_duration_str}', '{course_code}', 2024, NULL);"
             )
             insert_statements.append(insert_statement)
             event_id += 1
@@ -128,8 +134,10 @@ def generate_calendar_event_insert_statements(num_students, course_details):
     # Generate individual events for each student
     for student_id in range(1, num_students + 1):
         for _ in range(5):  # Each student has 5 events from Sep to Dec
-            event_start = datetime(2024, 9, 1) + timedelta(days=random.randint(0, 120))  # Random date in range
-            duration_hours = random.randint(1, 3)  # Random duration 1 to 3 hours
+            random_date = datetime(2024, 9, 1) + timedelta(days=random.randint(0, 120))  # Random date in range
+            start_hour = random.randint(9, 14)  # Random hour between 9 AM and 2 PM to ensure it ends by 5 PM
+            event_start = random_date.replace(hour=start_hour, minute=0, second=0)
+            duration_hours = random.randint(1, min(3, 17 - start_hour))  # Random duration 1 to 3 hours within limit
             duration_str = f"{duration_hours}:00:00"  # Format for SQL TIME
             
             # Generate insert statement for individual student event
@@ -143,6 +151,7 @@ def generate_calendar_event_insert_statements(num_students, course_details):
             event_id += 1
 
     return insert_statements
+
 
 
 phone_numbers = set()
