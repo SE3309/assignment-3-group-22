@@ -1,0 +1,12 @@
+Code Explanation
+
+The python script goes through relation by relation generation various amounts of data for each. The amounts are defined near the bottom of the script
+
+The order of data generation is based on foreign keys. To make meaning reltionships among the data and to not violate any foreign key constraint data can only be generated for a table that references a table that already exists.
+
+	For example, I was able to generate data for department first because it does not depend on an other relations where if i was to make student data first I  would generate a foreign key violation because the departmentID would not match an id from the department table. 
+
+To make sure there were no foreign key violations as I generated each table i kept the value of its primary keys to use later on.
+
+The output of the script is a large sql document full of insert statements that can be used to populate the database. Unless numbers are adjusted there are currently just over 200,000 records for this 
+

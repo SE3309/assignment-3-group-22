@@ -2,11 +2,46 @@ import random
 import string
 from datetime import datetime, timedelta
 
+departments = [
+    "Mathematics",
+    "Science",
+    "English",
+    "History",
+    "Physical Education",
+    "Art",
+    "Music",
+    "Social Studies",
+    "Computer Science",
+    "Foreign Languages",
+    "Philosophy",
+    "Psychology",
+    "Economics",
+    "Business Studies",
+    "Chemistry",
+    "Physics",
+    "Biology",
+    "Environmental Science",
+    "Librarian Services",
+    "Geography",
+    
+    "Political Science",
+    "Engineering",
+    "Anthropology",
+    "Architecture",
+    "Culinary Arts",
+    "Journalism",
+    "Theatre Arts",
+    "Health Education",
+    "Theology",
+    "Sociology"
+]
+
+
 def generate_department_insert_statements(num_departments):
     """Generate INSERT statements for the Department table."""
     insert_statements = []
     for department_id in range(1, num_departments + 1):
-        department_name = f"Department_{department_id}"
+        department_name = departments[department_id]
         address = f"{random.randint(1, 999)} Main St, City {department_id}"
         postal_code = f"{random.randint(10000, 99999)}"
         insert_statement = (
@@ -24,7 +59,7 @@ def generate_student_insert_statements(num_students, department_ids):
         password = ''.join(random.choices(string.ascii_letters + string.digits, k=8))
         full_name = f"Student {student_id}"
         year = random.randint(1, 4)  # Random year between 1-4
-        graduation_year = year + 4
+        graduation_year = 2023 + 4
         program = f"Program_{random.randint(1, 10)}"
         department_id = random.choice(department_ids)  # Pick a valid department ID
         insert_statement = (
@@ -72,7 +107,7 @@ def generate_course_insert_statements(course_details):
     insert_statements = []
     for course_code in course_details:
         for year in range(2024, 2027):  # Years 2024, 2025, 2026
-            instructor = random.choice(range(1, num_faculty + 1))  # Assuming 1000 faculty members
+            instructor = random.choice(range(1, num_faculty + 1))  
             insert_statement = (
                 f"INSERT INTO Course (courseCode, instructor, cyear) "
                 f"VALUES ('{course_code}', {instructor}, {year});"
@@ -233,11 +268,11 @@ def save_to_sql_file(filename, statements):
             file.write(statement + '\n')
 
 # Configuration for data generation
-num_departments = 25
-num_students = 2500
-num_faculty = 1500
+num_departments = 25 #making this more than 25 may break code!
+num_students = 1500
+num_faculty = 1000
 num_courses = 250
-num_contacts = 2500
+num_contacts = 4500
 
 
 # Generate data
