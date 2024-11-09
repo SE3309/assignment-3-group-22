@@ -99,25 +99,35 @@ def generate_student_course_insert_statements(num_students, course_details):
 
     return insert_statements
 
-import random
+
+
 from datetime import datetime, timedelta
+import random
 
 def generate_calendar_event_insert_statements(num_students, course_details):
-    """Generate INSERT statements for the CalendarEvent table with event times between 9 AM and 5 PM."""
+    """Generate INSERT statements for the CalendarEvent table with event times between 9 AM and 5 PM, excluding weekends."""
     insert_statements = []
     event_id = 1
     
-    # Generate weekly course events from September to December 2024
-    start_date = datetime(2024, 9, 1)  # Starting from September 2024
-    end_date = datetime(2024, 12, 31)  # Until December 2024
-    days_in_week = 7  # Days in a week for weekly events
+    # Store existing student events to check for overlaps
+    student_events = {student_id: [] for student_id in range(1, num_students + 1)}
+    
+    # Generate weekly course events from January to April 2025
+    start_date = datetime(2025, 1, 1)  # Starting from January 2025
+    end_date = datetime(2025, 4, 30)  # Until April 2025 (use 30th for end of month)
     fixed_duration_str = "03:00:00"  # Fixed three-hour duration
 
+    # Generate course events
     for course_code in course_details:
         current_date = start_date
         while current_date <= end_date:
+            # Skip weekends (Saturday and Sunday)
+            if current_date.weekday() >= 5:  # 5 = Saturday, 6 = Sunday
+                current_date += timedelta(days=1)  # Skip to the next day
+                continue
+            
             # Set a random start time between 9 AM and 2 PM, ensuring it ends by 5 PM
-            start_hour = random.randint(9, 14)
+            start_hour = random.randint(9, 17)
             event_start = current_date.replace(hour=start_hour, minute=0, second=0)
             
             # Generate insert statement for a weekly lecture
@@ -129,26 +139,46 @@ def generate_calendar_event_insert_statements(num_students, course_details):
             )
             insert_statements.append(insert_statement)
             event_id += 1
-            current_date += timedelta(days=days_in_week)  # Move to the next week
+            current_date += timedelta(days=7)  # Move to the next week
 
     # Generate individual events for each student
     for student_id in range(1, num_students + 1):
-        for _ in range(5):  # Each student has 5 events from Sep to Dec
-            random_date = datetime(2024, 9, 1) + timedelta(days=random.randint(0, 120))  # Random date in range
-            start_hour = random.randint(9, 14)  # Random hour between 9 AM and 2 PM to ensure it ends by 5 PM
+        for _ in range(5):  # Each student has 5 events from Jan to Apr
+            # Generate a random date within the range, ensuring it's not on a weekend
+            random_date = datetime(2025, 1, 1) + timedelta(days=random.randint(0, 120))  # Random date in range
+            while random_date.weekday() >= 5:  # Skip weekends (5 = Saturday, 6 = Sunday)
+                random_date = datetime(2025, 1, 1) + timedelta(days=random.randint(0, 120))  # Retry if weekend
+            
+            # Set a random start time between 8 AM and 5 PM
+            start_hour = random.randint(8, 17)
             event_start = random_date.replace(hour=start_hour, minute=0, second=0)
-            duration_hours = random.randint(1, min(3, 17 - start_hour))  # Random duration 1 to 3 hours within limit
+            duration_hours = random.randint(1, min(3, 20 - start_hour))  # Random duration 1 to 3 hours within limit
             duration_str = f"{duration_hours}:00:00"  # Format for SQL TIME
             
-            # Generate insert statement for individual student event
-            insert_statement = (
-                f"INSERT INTO CalendarEvent (eventID, eventName, eventDescription, eventStart, eventDuration, "
-                f"courseCode, cyear, studentID) "
-                f"VALUES ({event_id}, 'Student Event', 'Event for Student {student_id}', "
-                f"'{event_start}', '{duration_str}', NULL, NULL, {student_id});"
-            )
-            insert_statements.append(insert_statement)
-            event_id += 1
+            # Check for overlapping events for the student
+            overlap_found = False
+            event_end = event_start + timedelta(hours=duration_hours)  # Calculate the end time of the new event
+            
+            # Loop through existing events for this student and check for overlaps
+            for existing_event in student_events[student_id]:
+                existing_start, existing_end = existing_event
+                if not (event_end <= existing_start or event_start >= existing_end):  # Check if there is an overlap
+                    overlap_found = True
+                    break
+            
+            if not overlap_found:
+                # If no overlap, generate insert statement for student event
+                insert_statement = (
+                    f"INSERT INTO CalendarEvent (eventID, eventName, eventDescription, eventStart, eventDuration, "
+                    f"courseCode, cyear, studentID) "
+                    f"VALUES ({event_id}, 'Student Event', 'Event for Student {student_id}', "
+                    f"'{event_start}', '{duration_str}', NULL, NULL, {student_id});"
+                )
+                insert_statements.append(insert_statement)
+                event_id += 1
+                
+                # Add this new event to the student's list of events
+                student_events[student_id].append((event_start, event_end))
 
     return insert_statements
 
@@ -222,159 +252,12 @@ calendar_event_statements = generate_calendar_event_insert_statements(num_studen
 contact_statements = generate_contact_insert_statements(num_contacts)
 emergency_contact_statements = generate_emergency_contact_insert_statements(num_students, num_contacts)
 
-sql_script = """
--- Assignment 3 Db Schema Script
-CREATE DATABASE 3309Proj;
-USE 3309Proj;
-
--- Create Tables
-
-CREATE TABLE Department (
-    departmentID INT PRIMARY KEY,
-    departmentName VARCHAR(255) UNIQUE,
-    address VARCHAR(255),
-    postalCode VARCHAR(10)
-);
-
-CREATE TABLE Student (
-    studentID INT PRIMARY KEY,
-    email VARCHAR(255) UNIQUE,
-    password VARCHAR(255),
-    fullName VARCHAR(255),
-    yearInProgram INT,
-    graduationYear INT,
-    program VARCHAR(255),
-    departmentID INT,
-    FOREIGN KEY (departmentID) REFERENCES Department(departmentID)
-);
-
-CREATE TABLE FacultyMember (
-    facultyID INT PRIMARY KEY,
-    email VARCHAR(255) UNIQUE,
-    password VARCHAR(255),
-    fullName VARCHAR(255),
-    role VARCHAR(255),
-    officeNo VARCHAR(50),
-    contactInfo VARCHAR(255),
-    departmentID INT,
-    FOREIGN KEY (departmentID) REFERENCES Department(departmentID)
-);
-
-CREATE TABLE CourseDetails (
-    courseCode VARCHAR(10) PRIMARY KEY,
-    courseName VARCHAR(255),
-    courseDescription TEXT,
-    credits INT
-);
-
-CREATE TABLE Course (
-    courseCode VARCHAR(10),
-    instructor INT,
-    cyear INT,
-    PRIMARY KEY (courseCode, cyear),
-    FOREIGN KEY (courseCode) REFERENCES CourseDetails(courseCode),
-    FOREIGN KEY (instructor) REFERENCES FacultyMember(facultyID)
-);
-
-CREATE TABLE StudentCourse (
-    courseCode VARCHAR(10),
-    studentID INT,
-    cyear INT,
-    grade CHAR(2),
-    PRIMARY KEY (courseCode, cyear, studentID),
-    FOREIGN KEY (studentID) REFERENCES Student(studentID),
-    FOREIGN KEY (courseCode, cyear) REFERENCES Course(courseCode, cyear)
-);
-
-CREATE TABLE CalendarEvent (
-    eventID INT PRIMARY KEY,
-    eventName VARCHAR(255),
-    eventDescription TEXT,
-    eventStart DATETIME,
-    eventDuration TIME,
-    courseCode VARCHAR(10) NULL,
-    cyear INT NULL,
-    studentID INT NULL,
-    FOREIGN KEY (courseCode, cyear) REFERENCES Course(courseCode, cyear),
-    FOREIGN KEY (studentID) REFERENCES Student(studentID)
-);
-
-CREATE TABLE Contact (
-    phoneNumber VARCHAR(15) PRIMARY KEY,
-    cName VARCHAR(255),
-    address VARCHAR(255),
-    postalCode VARCHAR(10)
-);
-
-CREATE TABLE EmergencyContact (
-    studentID INT,
-    phoneNumber VARCHAR(15),
-    PRIMARY KEY (studentID, phoneNumber),
-    FOREIGN KEY (studentID) REFERENCES Student(studentID),
-    FOREIGN KEY (phoneNumber) REFERENCES Contact(phoneNumber)
-);
-
--- Triggers
-
-DELIMITER //
-
-CREATE TRIGGER limit_emergency_contacts
-BEFORE INSERT ON EmergencyContact
-FOR EACH ROW
-BEGIN
-    DECLARE contact_count INT;
-
-    -- Count existing emergency contacts for the given studentID
-    SELECT COUNT(*) INTO contact_count
-    FROM EmergencyContact
-    WHERE studentID = NEW.studentID;
-
-    -- Prevent insertion if the student already has 3 emergency contacts
-    IF contact_count >= 3 THEN
-        SIGNAL SQLSTATE '45000'
-        SET MESSAGE_TEXT = 'A student can have a maximum of 3 emergency contacts.';
-    END IF;
-END //
-
-DELIMITER ;
-
--- To view the structure of the Department table
-DESCRIBE Department;
-
--- To view the structure of the Student table
-DESCRIBE Student;
-
--- To view the structure of the FacultyMember table
-DESCRIBE FacultyMember;
-
--- To view the structure of the CourseDetails table
-DESCRIBE CourseDetails;
-
--- To view the structure of the Course table
-DESCRIBE Course;
-
--- To view the structure of the StudentCourse table
-DESCRIBE StudentCourse;
-
--- To view the structure of the CalendarEvent table
-DESCRIBE CalendarEvent;
-
--- To view the structure of the Contact table
-DESCRIBE Contact;
-
--- To view the structure of the EmergencyContact table
-DESCRIBE EmergencyContact;
-
-
-
-
-"""
 
 
 
 # Combine all statements into a single list
-combined_statements = sql_script.splitlines() + [
-    
+combined_statements = [
+    "USE 3309Proj;"
     "-- Department Inserts",
 ] + department_statements + [
     "-- Student Inserts",
