@@ -2,6 +2,14 @@ import random
 import string
 from datetime import datetime, timedelta
 
+# Configuration for data generation
+num_departments = 25 #making this more than 25 may break code!
+num_students = 1500
+num_faculty = 1000
+num_courses = 250
+num_contacts = 4500
+
+# Department declarations
 departments = [
     "Mathematics",
     "Science",
@@ -23,7 +31,6 @@ departments = [
     "Environmental Science",
     "Librarian Services",
     "Geography",
-    
     "Political Science",
     "Engineering",
     "Anthropology",
@@ -36,7 +43,9 @@ departments = [
     "Sociology"
 ]
 
+phone_numbers = set()
 
+# Methods to generate insert statements for tables
 def generate_department_insert_statements(num_departments):
     """Generate INSERT statements for the Department table."""
     insert_statements = []
@@ -136,9 +145,6 @@ def generate_student_course_insert_statements(num_students, course_details):
 
 
 
-from datetime import datetime, timedelta
-import random
-
 def generate_calendar_event_insert_statements(num_students, course_details):
     """Generate INSERT statements for the CalendarEvent table with event times between 9 AM and 5 PM, excluding weekends."""
     insert_statements = []
@@ -147,10 +153,10 @@ def generate_calendar_event_insert_statements(num_students, course_details):
     # Store existing student events to check for overlaps
     student_events = {student_id: [] for student_id in range(1, num_students + 1)}
     
-    # Generate weekly course events from January to April 2025
-    start_date = datetime(2025, 1, 1)  # Starting from January 2025
-    end_date = datetime(2025, 4, 30)  # Until April 2025 (use 30th for end of month)
-    fixed_duration_str = "03:00:00"  # Fixed three-hour duration
+    # Generate weekly course events from January to April 2025 (use 30th for end of month)
+    start_date = datetime(2025, 1, 1)
+    end_date = datetime(2025, 4, 30)
+    fixed_duration_str = "03:00:00" 
 
     # Generate course events
     for course_code in course_details:
@@ -217,9 +223,6 @@ def generate_calendar_event_insert_statements(num_students, course_details):
 
     return insert_statements
 
-
-
-phone_numbers = set()
 def generate_contact_insert_statements(num_contacts):
     """Generate INSERT statements for the Contact table."""
     insert_statements = []
@@ -261,19 +264,12 @@ def generate_emergency_contact_insert_statements(num_students, num_contacts):
 
     return insert_statements
 
+# Method to save the sql file
 def save_to_sql_file(filename, statements):
     """Save the generated SQL statements to a file."""
     with open(filename, 'w') as file:
         for statement in statements:
             file.write(statement + '\n')
-
-# Configuration for data generation
-num_departments = 25 #making this more than 25 may break code!
-num_students = 1500
-num_faculty = 1000
-num_courses = 250
-num_contacts = 4500
-
 
 # Generate data
 department_statements = generate_department_insert_statements(num_departments)
@@ -315,5 +311,4 @@ combined_statements = [
 
 # Save to a single SQL file
 save_to_sql_file('full_insert_script.sql', combined_statements)
-
 print("Single SQL script generated successfully!")
