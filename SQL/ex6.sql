@@ -1,26 +1,32 @@
 /* Insert */
-INSERT INTO StudentCourse (courseCode, studentID, cyear, grade) 
-SELECT c.courseCode, 101 as studentID, 2024 as cyear, 'A' as grade 
-FROM Course c 
-JOIN FacultyMember fm ON c.instructor = fm.facultyID 
-WHERE fm.fullName = 'John Doe' AND c.cyear = 2024; 
+INSERT INTO StudentCourse (courseCode, studentID, cyear, grade)
+SELECT 'COURSE38', 2222 as studentID, 2025 as cyear, 'A' as grade
+FROM Course c
+JOIN FacultyMember fm ON c.instructor = fm.facultyID
+WHERE fm.fullName = 'Faculty 1' AND c.cyear = 2025;
 
-/* Update 
+/* Update */ 
 UPDATE StudentCourse sc 
-SET sc.grade = 'B' 
-WHERE sc.courseCode IN ( 
-    SELECT courseCode 
+JOIN ( 
+    SELECT courseCode, 
+           AVG(CASE 
+               WHEN grade = 'A' THEN 4 
+               WHEN grade = 'B' THEN 3 
+               WHEN grade = 'C' THEN 2 
+               WHEN grade = 'D' THEN 1 
+               WHEN grade = 'F' THEN 0 
+           END) AS avgGrade 
     FROM StudentCourse 
-    WHERE grade < 'C' 
     GROUP BY courseCode 
-    HAVING AVG(grade) < 'C' 
-) AND sc.cyear = 2024; 
+    HAVING avgGrade < 2 
+) avgCourses ON sc.courseCode = avgCourses.courseCode 
+SET sc.grade = 'B' 
+WHERE sc.grade = 'F' AND sc.courseCode IS NOT NULL; 
 
-/* Delete
-DELETE FROM CalendarEvent 
-WHERE courseCode IN ( 
-    SELECT courseCode 
-    FROM Course 
-    WHERE cyear != 2024 
-); 
-
+/* Delete */
+DELETE FROM CalendarEvent
+WHERE courseCode IN (
+    SELECT courseCode
+    FROM Course
+    WHERE cyear != 2024
+);
